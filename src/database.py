@@ -8,13 +8,6 @@ from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-INT_PK = Annotated[
-    int,
-    mapped_column(
-        Integer, primary_key=True, autoincrement=True
-    )
-]
-
 Base: DeclarativeMeta = declarative_base()
 
 engine = create_async_engine(DATABASE_URL)

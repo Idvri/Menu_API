@@ -1,15 +1,15 @@
 from typing import List
 
-from sqlalchemy import String, ForeignKey, Text, Float
+from sqlalchemy import String, ForeignKey, Text, Float, Integer
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from src import Base, INT_PK
+from src import Base
 
 
 class DefaultModel:
     """Модель с переиспользуемыми полями для других моделей."""
 
-    id: Mapped[INT_PK]
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String)
     description: Mapped[Text] = mapped_column(Text)
 
