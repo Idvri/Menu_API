@@ -1,4 +1,5 @@
-from typing import Text, List, Annotated
+from typing import Text, List
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -13,7 +14,7 @@ class CreateMenuSchema(BaseModel):
 class MenuSchema(BaseModel):
     """Pydantic схема для отображения меню."""
 
-    id: str
+    id: UUID
     title: str
     description: Text
 
@@ -38,8 +39,7 @@ class CreateSubmenuSchema(CreateMenuSchema):
 
 class SubmenuSchema(MenuSchema):
     """Pydantic схема для отображения подменю."""
-
-    id: int
+    pass
 
 
 class MenuSubmenusSchema(MenuSchema):
@@ -57,7 +57,7 @@ class DishSchema(MenuSchema):
 class CreateDishSchema(CreateMenuSchema):
     """Pydantic схема для создания блюда."""
 
-    price: float
+    price: str
 
 
 class SubmenuDishesSchema(SubmenuSchema):

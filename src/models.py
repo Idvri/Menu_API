@@ -1,6 +1,7 @@
+import uuid
 from typing import List
 
-from sqlalchemy import String, ForeignKey, Text, Float, Integer
+from sqlalchemy import String, ForeignKey, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src import Base
@@ -9,7 +10,7 @@ from src import Base
 class DefaultModel:
     """Модель с переиспользуемыми полями для других моделей."""
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
     title: Mapped[str] = mapped_column(String)
     description: Mapped[Text] = mapped_column(Text)
 
@@ -27,7 +28,10 @@ class Submenu(DefaultModel, Base):
 
     __tablename__ = 'submenu'
 
-    menu_id: Mapped[int] = mapped_column(ForeignKey('menu.id', ondelete='CASCADE'))
+    menu_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey('menu.id', ondelete='CASCADE'),
+    )
     menu: Mapped['Menu'] = relationship(back_populates='submenus')
 
     dishes: Mapped[List['Dish']] = relationship(back_populates='submenu', lazy=False)
@@ -38,7 +42,10 @@ class Dish(DefaultModel, Base):
 
     __tablename__ = 'dish'
 
-    price: Mapped[float] = mapped_column(Float)
+    price: Mapped[str] = mapped_column(String)
 
-    submenu_id: Mapped[int] = mapped_column(ForeignKey('submenu.id', ondelete='CASCADE'))
+    submenu_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey('submenu.id', ondelete='CASCADE'),
+    )
     submenu: Mapped['Submenu'] = relationship(back_populates='dishes', lazy=False)
