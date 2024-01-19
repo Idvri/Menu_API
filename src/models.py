@@ -19,10 +19,10 @@ class Menu(DefaultModel, Base):
 
     __tablename__ = 'menu'
 
-    submenus: Mapped[List['SubMenu']] = relationship(back_populates='menu', lazy=False)
+    submenus: Mapped[List['Submenu']] = relationship(back_populates='menu', lazy=False)
 
 
-class SubMenu(DefaultModel, Base):
+class Submenu(DefaultModel, Base):
     """Модель подменю."""
 
     __tablename__ = 'submenu'
@@ -41,4 +41,4 @@ class Dish(DefaultModel, Base):
     price: Mapped[float] = mapped_column(Float)
 
     submenu_id: Mapped[int] = mapped_column(ForeignKey('submenu.id', ondelete='CASCADE'))
-    submenu: Mapped['SubMenu'] = relationship(back_populates='dishes', lazy=False)
+    submenu: Mapped['Submenu'] = relationship(back_populates='dishes', lazy=False)
