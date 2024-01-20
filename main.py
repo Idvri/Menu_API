@@ -3,7 +3,7 @@ from fastapi import FastAPI, APIRouter
 from src.routers import menu_router, submenu_router, dish_router
 
 app = FastAPI(
-    title='CRUD Menu.'
+    title='Menu API.'
 )
 
 router = APIRouter(
