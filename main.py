@@ -1,11 +1,19 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 
-from src.routers import menu_router
+from src.routers import menu_router, submenu_router, dish_router
 
 app = FastAPI(
     title='CRUD Menu.'
 )
 
-app.include_router(
-    menu_router
+router = APIRouter(
+    prefix='/api/v1',
 )
+
+submenu_router.include_router(dish_router, prefix='/{target_submenu_id}')
+
+menu_router.include_router(submenu_router, prefix='/{target_menu_id}')
+
+router.include_router(menu_router)
+
+app.include_router(router)

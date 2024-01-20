@@ -1,8 +1,6 @@
 from src import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
-from typing import AsyncGenerator, Annotated
+from typing import AsyncGenerator
 
-from sqlalchemy import Integer
-from sqlalchemy.orm import mapped_column
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 
