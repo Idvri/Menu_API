@@ -1,4 +1,5 @@
 import uuid
+
 from typing import List
 
 from sqlalchemy import String, ForeignKey, Text, Uuid

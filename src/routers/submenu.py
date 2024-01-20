@@ -1,18 +1,17 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from fastapi import Depends
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from typing_extensions import List
 
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
 from starlette.responses import JSONResponse
 
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import Menu, get_async_session, CreateSubmenuSchema, Submenu, MenuSubmenusSchema, MessageSchema, \
-    SubmenuSchema, SubmenuSchemaWithCounter
+from src import get_async_session, CreateSubmenuSchema, Submenu, MessageSchema, SubmenuSchema, SubmenuSchemaWithCounter
 
 router = APIRouter(
     prefix='/submenus',
@@ -21,7 +20,7 @@ router = APIRouter(
 
 @router.get(
     '/',
-    response_model=MenuSubmenusSchema,
+    response_model=List[SubmenuSchema],
     status_code=HTTP_200_OK,
     responses={HTTP_404_NOT_FOUND: {'model': MessageSchema}},
     tags=['Submenu'],
@@ -33,15 +32,13 @@ async def get_submenus(
 ):
     """Эндпойнт для получения подменю определенного меню."""
 
-    query = select(Menu).where(Menu.id == target_menu_id)
+    query = select(Submenu).where(Submenu.menu_id == target_menu_id)
     result = await session.execute(query)
     try:
-        menu = result.scalars().unique().one()
+        submenus = result.scalars().unique().all()
     except NoResultFound:
         return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
-    if not menu.submenus:
-        return JSONResponse(content=menu.submenus, status_code=HTTP_200_OK)
-    return menu
+    return submenus
 
 
 @router.post(

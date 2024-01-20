@@ -1,14 +1,12 @@
 from uuid import UUID
 
-from fastapi import APIRouter
-
-from fastapi import Depends
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from fastapi import APIRouter, Depends
 
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
 from starlette.responses import JSONResponse
 
 from sqlalchemy import select
+from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import get_async_session, Submenu, MessageSchema, SubmenuDishesSchema, DishSchema, CreateDishSchema, Dish

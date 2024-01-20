@@ -1,4 +1,5 @@
 from typing import Text, List
+
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -40,12 +41,6 @@ class CreateSubmenuSchema(CreateMenuSchema):
 class SubmenuSchema(MenuSchema):
     """Pydantic схема для отображения подменю."""
     pass
-
-
-class MenuSubmenusSchema(MenuSchema):
-    """Pydantic схема для отображения подменю в меню."""
-
-    submenus: List[SubmenuSchema]
 
 
 class DishSchema(MenuSchema):
