@@ -1,3 +1,4 @@
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -9,7 +10,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import get_async_session, Submenu, MessageSchema, SubmenuDishesSchema, DishSchema, CreateDishSchema, Dish
+from src import get_async_session, MessageSchema, DishSchema, CreateDishSchema, Dish
 
 router = APIRouter(
     prefix='/dishes',
@@ -18,27 +19,26 @@ router = APIRouter(
 
 @router.get(
     '/',
-    response_model=SubmenuDishesSchema,
+    response_model=List[DishSchema],
     status_code=HTTP_200_OK,
     responses={HTTP_404_NOT_FOUND: {'model': MessageSchema}},
     tags=['Dish'],
 )
 async def get_dishes(
-        target_menu_id: UUID,
         target_submenu_id: UUID,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для получения блюд определенного подменю."""
 
-    query = select(Submenu).where(Submenu.id == target_submenu_id, Submenu.menu_id == target_menu_id)
+    query = select(Dish).where(Dish.submenu_id == target_submenu_id)
     result = await session.execute(query)
     try:
-        submenu = result.scalars().unique().one()
+        dishes = result.scalars().unique().all()
     except NoResultFound:
         return JSONResponse(content=[], status_code=HTTP_200_OK)
-    if not submenu.dishes:
-        return JSONResponse(content=submenu.dishes, status_code=HTTP_200_OK)
-    return submenu
+    if not dishes:
+        return JSONResponse(content=dishes, status_code=HTTP_200_OK)
+    return dishes
 
 
 @router.post(

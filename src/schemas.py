@@ -1,21 +1,21 @@
-from typing import Text, List
+from typing import Text
 
 from uuid import UUID
 
 from pydantic import BaseModel
 
 
-class CreateMenuSchema(BaseModel):
-    """Pydantic схема для создания меню."""
-
-    title: str
-    description: Text
-
-
 class MenuSchema(BaseModel):
     """Pydantic схема для отображения меню."""
 
     id: UUID
+    title: str
+    description: Text
+
+
+class CreateMenuSchema(BaseModel):
+    """Pydantic схема для создания меню."""
+
     title: str
     description: Text
 
@@ -27,10 +27,9 @@ class MenuSchemaWithCounters(MenuSchema):
     dishes_count: int
 
 
-class SubmenuSchemaWithCounter(MenuSchema):
-    """Pydantic схема для отображения подменю c кол-вом блюд."""
-
-    dishes_count: int
+class SubmenuSchema(MenuSchema):
+    """Pydantic схема для отображения подменю."""
+    pass
 
 
 class CreateSubmenuSchema(CreateMenuSchema):
@@ -38,9 +37,10 @@ class CreateSubmenuSchema(CreateMenuSchema):
     pass
 
 
-class SubmenuSchema(MenuSchema):
-    """Pydantic схема для отображения подменю."""
-    pass
+class SubmenuSchemaWithCounter(MenuSchema):
+    """Pydantic схема для отображения подменю c кол-вом блюд."""
+
+    dishes_count: int
 
 
 class DishSchema(MenuSchema):
@@ -53,12 +53,6 @@ class CreateDishSchema(CreateMenuSchema):
     """Pydantic схема для создания блюда."""
 
     price: str
-
-
-class SubmenuDishesSchema(SubmenuSchema):
-    """Pydantic схема для отображения блюд подменю."""
-
-    dishes: List[DishSchema]
 
 
 class MessageSchema(BaseModel):
