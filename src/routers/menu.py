@@ -11,8 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import Menu, get_async_session, MenuSchema, CreateMenuSchema, MessageSchema, MenuSchemaWithCounters
-
+from src import Menu, get_async_session, MenuSchema, CreateMenuSchema, MessageSchema, MenuSchemaWithCounters, \
+    get_menu_db
 
 router = APIRouter(
     prefix='/menus',
@@ -66,14 +66,10 @@ async def get_menu(
 ):
     """Эндпойнт для получения определенного меню."""
 
-    query = select(Menu).where(Menu.id == target_menu_id)
-    result = await session.execute(query)
     try:
-        menu = result.scalars().unique().one()
+        menu = await get_menu_db(target_menu_id, session)
     except NoResultFound:
         return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
-    menu.submenus_count = len(menu.submenus)
-    menu.dishes_count = sum(len(submenu.dishes) for submenu in menu.submenus)
     return menu
 
 

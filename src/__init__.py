@@ -3,6 +3,7 @@ from .database import Base, get_async_session
 from .models import DefaultModel, Menu, Submenu, Dish
 from .schemas import CreateMenuSchema, MenuSchema, CreateSubmenuSchema, SubmenuSchema, \
     MessageSchema, DishSchema, CreateDishSchema, MenuSchemaWithCounters, SubmenuSchemaWithCounter
+from .utils import get_menu_db, get_submenu_db
 
 __all__ = (
     'DB_HOST', 'DB_PORT',
@@ -15,4 +16,5 @@ __all__ = (
     'SubmenuSchema', 'SubmenuSchemaWithCounter',
     'MessageSchema', 'DishSchema',
     'CreateDishSchema', 'MenuSchemaWithCounters',
+    'get_menu_db', 'get_submenu_db',
 )

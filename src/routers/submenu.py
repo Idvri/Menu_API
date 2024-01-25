@@ -11,7 +11,8 @@ from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import get_async_session, CreateSubmenuSchema, Submenu, MessageSchema, SubmenuSchema, SubmenuSchemaWithCounter
+from src import get_async_session, CreateSubmenuSchema, Submenu, MessageSchema, SubmenuSchema, \
+    SubmenuSchemaWithCounter, get_submenu_db
 
 router = APIRouter(
     prefix='/submenus',
@@ -72,19 +73,15 @@ async def create_submenu(
     tags=['Submenu'],
 )
 async def get_submenu(
-        target_menu_id: UUID,
         target_submenu_id: UUID,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для получения подменю."""
 
-    query = select(Submenu).where(Submenu.menu_id == target_menu_id, Submenu.id == target_submenu_id)
-    result = await session.execute(query)
     try:
-        submenu = result.scalars().unique().one()
+        submenu = await get_submenu_db(target_submenu_id, session)
     except NoResultFound:
         return JSONResponse(content={"detail": "submenu not found"}, status_code=HTTP_404_NOT_FOUND)
-    submenu.dishes_count = len(submenu.dishes)
     return submenu
 
 
