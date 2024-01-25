@@ -8,7 +8,7 @@ from src import Menu, Submenu, get_async_session, Dish
 
 
 async def get_menu_db(menu_id: UUID, session: AsyncSession = Depends(get_async_session)) -> tuple:
-    """Функция для получения меню."""
+    """Функция для получения меню с выводом кол-ва подменю и блюд."""
 
     m = aliased(Menu)
     s = aliased(Submenu)
@@ -32,7 +32,7 @@ async def get_menu_db(menu_id: UUID, session: AsyncSession = Depends(get_async_s
 
 
 async def get_submenu_db(submenu_id: UUID, session: AsyncSession = Depends(get_async_session)) -> tuple:
-    """Функция для получения подменю."""
+    """Функция для получения подменю с выводом кол-ва блюд."""
 
     s = aliased(Submenu)
     d = aliased(Dish)

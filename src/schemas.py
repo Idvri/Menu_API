@@ -1,4 +1,4 @@
-from typing import Text
+from typing import Text, Optional
 
 from uuid import UUID
 
@@ -16,6 +16,7 @@ class MenuSchema(BaseModel):
 class CreateMenuSchema(BaseModel):
     """Pydantic схема для создания меню."""
 
+    id: Optional[UUID] = None
     title: str
     description: Text
 

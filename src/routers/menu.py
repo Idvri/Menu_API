@@ -47,8 +47,12 @@ async def create_menu(
 ):
     """Эндпойнт для создания меню."""
 
-    # noinspection PyArgumentList
-    menu = Menu(title=data.title, description=data.description)
+    if data.id:
+        # noinspection PyArgumentList
+        menu = Menu(id=data.id, title=data.title, description=data.description)
+    else:
+        # noinspection PyArgumentList
+        menu = Menu(title=data.title, description=data.description)
     session.add(menu)
     await session.commit()
     return menu

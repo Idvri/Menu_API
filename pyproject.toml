@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+addopts = "--capture=no"
+pythonpath = [
+    ".", "src",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
+asyncio_mode = "auto"

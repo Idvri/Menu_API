@@ -1,8 +1,10 @@
 from src import DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
 from typing import AsyncGenerator
 
+from sqlalchemy.orm import declarative_base
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
+from sqlalchemy.ext.declarative import DeclarativeMeta
 
 DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
