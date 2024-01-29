@@ -1,0 +1,34 @@
+version: '3.0'
+
+services:
+
+  test_db:
+    image: postgres:15.1-alpine
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/var/lib/postgresql/data/test_pgdata
+    restart: always
+    volumes:
+      - test_pg_data:/var/lib/postgresql/data/test_pgdata
+    expose:
+      - '5433'
+    ports:
+      - '5433:5433'
+    command: -p 5433
+
+  test:
+    build: .
+    tty: true
+    restart: on-failure
+    volumes:
+      - .:/code
+    env_file:
+      - .docker.env
+    command: bash -c 'pytest -vv tests/'
+    depends_on:
+      - test_db
+
+volumes:
+  test_pg_data:

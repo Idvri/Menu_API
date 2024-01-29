@@ -8,13 +8,15 @@ REST API для работы с меню ресторана.
 - PostgreSQL;
 - SQLAlchemy;
 - Pydantic;
-- Docker.
+- Docker;
+- Pytest.
 
 
 ### Установка и запуск (Docker):
 - git clone https://github.com/Idvri/Menu_API.git;
 - docker-compose up --build - в первый раз (ждем 1-2 сек. пока БД поднимается);
-- docker-compose up.
+- docker-compose up;
+- docker-compose -f run_tests.yaml up --build - тестирование.
 
 ### Доступность:
 - http://localhost:8000.

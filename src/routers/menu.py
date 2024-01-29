@@ -73,7 +73,7 @@ async def get_menu(
     try:
         menu = await get_menu_db(target_menu_id, session)
     except NoResultFound:
-        return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
     return menu
 
 
@@ -95,7 +95,7 @@ async def update_menu(
     try:
         menu = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
     menu.title = data.title
     menu.description = data.description
     await session.commit()
@@ -121,7 +121,7 @@ async def delete_menu(
     try:
         menu = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
     await session.delete(menu)
     await session.commit()
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)

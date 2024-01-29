@@ -55,13 +55,28 @@ async def create_dish(
 ):
     """Эндпойнт для создания подменю."""
 
-    # noinspection PyArgumentList
-    dish = Dish(title=data.title, description=data.description, price=data.price, submenu_id=target_submenu_id)
+    if data.id:
+        # noinspection PyArgumentList
+        dish = Dish(
+            id=data.id,
+            title=data.title,
+            description=data.description,
+            price=data.price,
+            submenu_id=target_submenu_id
+        )
+    else:
+        # noinspection PyArgumentList
+        dish = Dish(
+            title=data.title,
+            description=data.description,
+            price=data.price,
+            submenu_id=target_submenu_id
+        )
     session.add(dish)
     try:
         await session.commit()
     except IntegrityError:
-        return JSONResponse(content={"detail": "submenu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
     return dish
 
 
@@ -83,7 +98,7 @@ async def get_dish(
     try:
         dish = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "dish not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'dish not found'}, status_code=HTTP_404_NOT_FOUND)
     return dish
 
 
@@ -106,7 +121,7 @@ async def update_dish(
     try:
         dish = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "dish not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'dish not found'}, status_code=HTTP_404_NOT_FOUND)
     dish.title = data.title
     dish.description = data.description
     dish.price = data.price
@@ -134,7 +149,7 @@ async def delete_dish(
     try:
         dish = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "dish not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'dish not found'}, status_code=HTTP_404_NOT_FOUND)
     await session.delete(dish)
     await session.commit()
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)

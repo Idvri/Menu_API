@@ -38,7 +38,7 @@ async def get_submenus(
     try:
         submenus = result.scalars().unique().all()
     except NoResultFound:
-        return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
     return submenus
 
 
@@ -56,13 +56,17 @@ async def create_submenu(
 ):
     """Эндпойнт для создания подменю."""
 
-    # noinspection PyArgumentList
-    submenu = Submenu(title=data.title, description=data.description, menu_id=target_menu_id)
+    if data.id:
+        # noinspection PyArgumentList
+        submenu = Submenu(id=data.id, title=data.title, description=data.description, menu_id=target_menu_id)
+    else:
+        # noinspection PyArgumentList
+        submenu = Submenu(title=data.title, description=data.description, menu_id=target_menu_id)
     session.add(submenu)
     try:
         await session.commit()
     except IntegrityError:
-        return JSONResponse(content={"detail": "menu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
     return submenu
 
 
@@ -81,7 +85,7 @@ async def get_submenu(
     try:
         submenu = await get_submenu_db(target_submenu_id, session)
     except NoResultFound:
-        return JSONResponse(content={"detail": "submenu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
     return submenu
 
 
@@ -104,7 +108,7 @@ async def update_submenu(
     try:
         submenu = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "submenu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
     submenu.title = data.title
     submenu.description = data.description
     await session.commit()
@@ -131,7 +135,7 @@ async def delete_submenu(
     try:
         submenu = result.scalars().unique().one()
     except NoResultFound:
-        return JSONResponse(content={"detail": "submenu not found"}, status_code=HTTP_404_NOT_FOUND)
+        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
     for dish in submenu.dishes:
         await session.delete(dish)
     await session.delete(submenu)
