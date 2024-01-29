@@ -3,7 +3,7 @@ REST API для работы с меню ресторана.
 
 
 ### Stack:
-- Python 3.11;
+- Python 3.10;
 - FastAPI;
 - PostgreSQL;
 - SQLAlchemy;
