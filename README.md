@@ -16,7 +16,7 @@ REST API для работы с меню ресторана.
 - git clone https://github.com/Idvri/Menu_API.git;
 - docker-compose up --build - в первый раз (ждем 1-2 сек. пока БД поднимается);
 - docker-compose up;
-- docker-compose -f run_tests.yaml up --build - тестирование.
+- docker-compose -f run_tests.yaml up --build - тестирование (Pytest).
 
 ### Доступность:
 - http://localhost:8000.
