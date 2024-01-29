@@ -19,7 +19,11 @@ async def test_get_menus():
             assert response.json() == []
         else:
             assert response.json() == [
-                {'id': '7f59f0a0-db4a-4b8f-a832-f63796f4443b', 'title': 'string', 'description': 'string'}
+                {
+                    'id': '7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                    'title': 'string',
+                    'description': 'string'
+                }
             ]
 
 
