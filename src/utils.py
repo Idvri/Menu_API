@@ -27,7 +27,7 @@ async def get_menu_db(menu_id: UUID, session: AsyncSession = Depends(get_async_s
         .group_by(m.id)
     )
     result = await session.execute(query)
-    data = result.unique().one()
+    data = result.unique().one_or_none()
     return data
 
 
@@ -48,5 +48,5 @@ async def get_submenu_db(submenu_id: UUID, session: AsyncSession = Depends(get_a
         .group_by(s.id)
     )
     result = await session.execute(query)
-    data = result.unique().one()
+    data = result.unique().one_or_none()
     return data

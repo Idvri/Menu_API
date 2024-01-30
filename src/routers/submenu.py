@@ -37,8 +37,9 @@ async def get_submenus(
     result = await session.execute(query)
     try:
         submenus = result.scalars().unique().all()
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
+    except NoResultFound as exc:
+        exc.args = 'menu'
+        raise exc
     return submenus
 
 
@@ -82,10 +83,10 @@ async def get_submenu(
 ):
     """Эндпойнт для получения подменю."""
 
-    try:
-        submenu = await get_submenu_db(target_submenu_id, session)
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
+    submenu = await get_submenu_db(target_submenu_id, session)
+    if not submenu:
+        NoResultFound.args = 'submenu'
+        raise NoResultFound
     return submenu
 
 
@@ -105,10 +106,10 @@ async def update_submenu(
 
     query = select(Submenu).where(Submenu.menu_id == target_menu_id, Submenu.id == target_submenu_id)
     result = await session.execute(query)
-    try:
-        submenu = result.scalars().unique().one()
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
+    submenu = result.scalars().unique().one()
+    if not submenu:
+        NoResultFound.args = 'submenu'
+        raise NoResultFound
     submenu.title = data.title
     submenu.description = data.description
     await session.commit()
@@ -132,10 +133,10 @@ async def delete_submenu(
 
     query = select(Submenu).where(Submenu.menu_id == target_menu_id, Submenu.id == target_submenu_id)
     result = await session.execute(query)
-    try:
-        submenu = result.scalars().unique().one()
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
+    submenu = result.scalars().unique().one()
+    if not submenu:
+        NoResultFound.args = 'submenu'
+        raise NoResultFound
     for dish in submenu.dishes:
         await session.delete(dish)
     await session.delete(submenu)
