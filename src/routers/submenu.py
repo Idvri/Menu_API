@@ -7,12 +7,12 @@ from typing_extensions import List
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
 from starlette.responses import JSONResponse
 
-from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import get_async_session, CreateSubmenuSchema, Submenu, MessageSchema, SubmenuSchema, \
-    SubmenuSchemaWithCounter, get_submenu_db
+from src import get_async_session
+from src.utils import get_submenu_db, get_submenu_db_with_counters, get_submenus_db, create_db_obj, check_db_obj
+from src.schemas import SubmenuSchema, CreateSubmenuSchema, SubmenuSchemaWithCounter, MessageSchema
 
 router = APIRouter(
     prefix='/submenus',
@@ -33,10 +33,8 @@ async def get_submenus(
 ):
     """Эндпойнт для получения подменю определенного меню."""
 
-    query = select(Submenu).where(Submenu.menu_id == target_menu_id)
-    result = await session.execute(query)
     try:
-        submenus = result.scalars().unique().all()
+        submenus = await get_submenus_db(target_menu_id, session)
     except NoResultFound as exc:
         exc.args = 'menu'
         raise exc
@@ -57,15 +55,8 @@ async def create_submenu(
 ):
     """Эндпойнт для создания подменю."""
 
-    if data.id:
-        # noinspection PyArgumentList
-        submenu = Submenu(id=data.id, title=data.title, description=data.description, menu_id=target_menu_id)
-    else:
-        # noinspection PyArgumentList
-        submenu = Submenu(title=data.title, description=data.description, menu_id=target_menu_id)
-    session.add(submenu)
     try:
-        await session.commit()
+        submenu = await create_db_obj(target_menu_id, data, session)
     except IntegrityError:
         return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
     return submenu
@@ -83,10 +74,8 @@ async def get_submenu(
 ):
     """Эндпойнт для получения подменю."""
 
-    submenu = await get_submenu_db(target_submenu_id, session)
-    if not submenu:
-        NoResultFound.args = 'submenu'
-        raise NoResultFound
+    submenu = await get_submenu_db_with_counters(target_submenu_id, session)
+    check_db_obj(submenu, 'submenu')
     return submenu
 
 
@@ -104,12 +93,7 @@ async def update_submenu(
 ):
     """Эндпойнт для изменения подменю."""
 
-    query = select(Submenu).where(Submenu.menu_id == target_menu_id, Submenu.id == target_submenu_id)
-    result = await session.execute(query)
-    submenu = result.scalars().unique().one()
-    if not submenu:
-        NoResultFound.args = 'submenu'
-        raise NoResultFound
+    submenu = await get_submenu_db(target_menu_id, target_submenu_id, session)
     submenu.title = data.title
     submenu.description = data.description
     await session.commit()
@@ -131,12 +115,7 @@ async def delete_submenu(
 ):
     """Эндпойнт для удаления подменю."""
 
-    query = select(Submenu).where(Submenu.menu_id == target_menu_id, Submenu.id == target_submenu_id)
-    result = await session.execute(query)
-    submenu = result.scalars().unique().one()
-    if not submenu:
-        NoResultFound.args = 'submenu'
-        raise NoResultFound
+    submenu = await get_submenu_db(target_menu_id, target_submenu_id, session)
     for dish in submenu.dishes:
         await session.delete(dish)
     await session.delete(submenu)

@@ -28,6 +28,4 @@ app.include_router(router)
 
 @app.exception_handler(NoResultFound)
 async def menu_exception_handler(request: Request, exc: NoResultFound):
-    if exc.args == 'menu':
-        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
-    return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
+    return JSONResponse(content={'detail': f'{exc.args} not found'}, status_code=HTTP_404_NOT_FOUND)

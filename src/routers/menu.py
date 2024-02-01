@@ -7,12 +7,11 @@ from typing import List
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
 from starlette.responses import JSONResponse
 
-from sqlalchemy import select
-from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import Menu, get_async_session, MenuSchema, CreateMenuSchema, MessageSchema, MenuSchemaWithCounters, \
-    get_menu_db
+from src import get_async_session
+from src.schemas import MenuSchema, CreateMenuSchema, MenuSchemaWithCounters, MessageSchema
+from src.utils import create_db_obj, get_menu_db, get_menu_db_with_counters, get_menus_db
 
 router = APIRouter(
     prefix='/menus',
@@ -29,9 +28,7 @@ async def get_menus(
 ):
     """Эндпойнт для получения всех меню."""
 
-    query = select(Menu)
-    result = await session.execute(query)
-    menus = result.scalars().unique().all()
+    menus = await get_menus_db(session)
     return menus
 
 
@@ -46,15 +43,7 @@ async def create_menu(
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для создания меню."""
-
-    if data.id:
-        # noinspection PyArgumentList
-        menu = Menu(id=data.id, title=data.title, description=data.description)
-    else:
-        # noinspection PyArgumentList
-        menu = Menu(title=data.title, description=data.description)
-    session.add(menu)
-    await session.commit()
+    menu = await create_db_obj(data=data, session=session)
     return menu
 
 
@@ -70,10 +59,7 @@ async def get_menu(
 ):
     """Эндпойнт для получения определенного меню."""
 
-    menu = await get_menu_db(target_menu_id, session)
-    if not menu:
-        NoResultFound.args = 'menu'
-        raise NoResultFound
+    menu = await get_menu_db_with_counters(target_menu_id, session)
     return menu
 
 
@@ -90,12 +76,7 @@ async def update_menu(
 ):
     """Эндпойнт для изменения определенного меню."""
 
-    query = select(Menu).where(Menu.id == target_menu_id)
-    result = await session.execute(query)
-    menu = result.scalars().unique().one_or_none()
-    if not menu:
-        NoResultFound.args = 'menu'
-        raise NoResultFound
+    menu = await get_menu_db(target_menu_id, session)
     menu.title = data.title
     menu.description = data.description
     await session.commit()
@@ -116,12 +97,7 @@ async def delete_menu(
 ):
     """Эндпойнт для удаления определенного меню."""
 
-    query = select(Menu).where(Menu.id == target_menu_id)
-    result = await session.execute(query)
-    menu = result.scalars().unique().one_or_none()
-    if not menu:
-        NoResultFound.args = 'menu'
-        raise NoResultFound
+    menu = await get_menu_db(target_menu_id, session)
     await session.delete(menu)
     await session.commit()
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)

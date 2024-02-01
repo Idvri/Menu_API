@@ -6,11 +6,12 @@ from fastapi import APIRouter, Depends
 from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
 from starlette.responses import JSONResponse
 
-from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound, IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import get_async_session, MessageSchema, DishSchema, CreateDishSchema, Dish
+from src import get_async_session
+from src.schemas import MessageSchema, DishSchema, CreateDishSchema
+from src.utils import get_dishes_db, create_db_obj, get_dish_db
 
 router = APIRouter(
     prefix='/dishes',
@@ -30,14 +31,10 @@ async def get_dishes(
 ):
     """Эндпойнт для получения блюд определенного подменю."""
 
-    query = select(Dish).where(Dish.submenu_id == target_submenu_id)
-    result = await session.execute(query)
     try:
-        dishes = result.scalars().unique().all()
+        dishes = await get_dishes_db(target_submenu_id, session)
     except NoResultFound:
         return JSONResponse(content=[], status_code=HTTP_200_OK)
-    if not dishes:
-        return JSONResponse(content=dishes, status_code=HTTP_200_OK)
     return dishes
 
 
@@ -55,26 +52,8 @@ async def create_dish(
 ):
     """Эндпойнт для создания подменю."""
 
-    if data.id:
-        # noinspection PyArgumentList
-        dish = Dish(
-            id=data.id,
-            title=data.title,
-            description=data.description,
-            price=data.price,
-            submenu_id=target_submenu_id
-        )
-    else:
-        # noinspection PyArgumentList
-        dish = Dish(
-            title=data.title,
-            description=data.description,
-            price=data.price,
-            submenu_id=target_submenu_id
-        )
-    session.add(dish)
     try:
-        await session.commit()
+        dish = await create_db_obj(target_submenu_id, data, session)
     except IntegrityError:
         return JSONResponse(content={'detail': 'submenu not found'}, status_code=HTTP_404_NOT_FOUND)
     return dish
@@ -87,18 +66,12 @@ async def create_dish(
     tags=['Dish'],
 )
 async def get_dish(
-        target_submenu_id: UUID,
         target_dish_id: UUID,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для получения подменю."""
 
-    query = select(Dish).where(Dish.submenu_id == target_submenu_id, Dish.id == target_dish_id)
-    result = await session.execute(query)
-    try:
-        dish = result.scalars().unique().one()
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'dish not found'}, status_code=HTTP_404_NOT_FOUND)
+    dish = await get_dish_db(target_dish_id, session)
     return dish
 
 
@@ -109,19 +82,13 @@ async def get_dish(
     tags=['Dish'],
 )
 async def update_dish(
-        target_submenu_id: UUID,
         target_dish_id: UUID,
         data: CreateDishSchema,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для изменения блюда."""
 
-    query = select(Dish).where(Dish.submenu_id == target_submenu_id, Dish.id == target_dish_id)
-    result = await session.execute(query)
-    try:
-        dish = result.scalars().unique().one()
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'dish not found'}, status_code=HTTP_404_NOT_FOUND)
+    dish = await get_dish_db(target_dish_id, session)
     dish.title = data.title
     dish.description = data.description
     dish.price = data.price
@@ -138,18 +105,12 @@ async def update_dish(
     tags=['Dish'],
 )
 async def delete_dish(
-        target_submenu_id: UUID,
         target_dish_id: UUID,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для удаления блюда."""
 
-    query = select(Dish).where(Dish.submenu_id == target_submenu_id, Dish.id == target_dish_id)
-    result = await session.execute(query)
-    try:
-        dish = result.scalars().unique().one()
-    except NoResultFound:
-        return JSONResponse(content={'detail': 'dish not found'}, status_code=HTTP_404_NOT_FOUND)
+    dish = await get_dish_db(target_dish_id, session)
     await session.delete(dish)
     await session.commit()
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)
