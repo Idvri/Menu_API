@@ -1,18 +1,15 @@
-from typing import List
-
 from fastapi import Depends
-
-from sqlalchemy import UUID, select, func, Integer
-from sqlalchemy.orm import aliased
+from sqlalchemy import UUID, Integer, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
-from src import Menu, Submenu, Dish, get_async_session
+from src import Dish, Menu, Submenu, get_async_session
 from src.utils.universal import check_db_obj
 
 
 async def get_menus_db(
         session: AsyncSession = Depends(get_async_session)
-) -> List[Menu]:
+) -> list[Menu]:
     """Функция для получения списка меню."""
 
     query = select(Menu)

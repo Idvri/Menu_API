@@ -1,18 +1,25 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-
-from typing_extensions import List
-
-from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
-from starlette.responses import JSONResponse
-
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
+from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 from src import get_async_session
-from src.utils import get_submenu_db, get_submenu_db_with_counters, get_submenus_db, create_db_obj, check_db_obj
-from src.schemas import SubmenuSchema, CreateSubmenuSchema, SubmenuSchemaWithCounter, MessageSchema
+from src.schemas import (
+    CreateSubmenuSchema,
+    MessageSchema,
+    SubmenuSchema,
+    SubmenuSchemaWithCounter,
+)
+from src.utils import (
+    check_db_obj,
+    create_db_obj,
+    get_submenu_db,
+    get_submenu_db_with_counters,
+    get_submenus_db,
+)
 
 router = APIRouter(
     prefix='/submenus',
@@ -21,7 +28,7 @@ router = APIRouter(
 
 @router.get(
     '/',
-    response_model=List[SubmenuSchema],
+    response_model=list[SubmenuSchema],
     status_code=HTTP_200_OK,
     responses={HTTP_404_NOT_FOUND: {'model': MessageSchema}},
     tags=['Submenu'],

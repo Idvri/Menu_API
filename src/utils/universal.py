@@ -1,18 +1,16 @@
-from typing import Optional
 from fastapi import Depends
 from pydantic import BaseModel
-
 from sqlalchemy import UUID
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import DefaultModel, Menu, Submenu, Dish, get_async_session
-from src.schemas import CreateMenuSchema, CreateSubmenuSchema, CreateDishSchema
+from src import DefaultModel, Dish, Menu, Submenu, get_async_session
+from src.schemas import CreateDishSchema, CreateMenuSchema, CreateSubmenuSchema
 
 
 async def create_db_obj(
-        obj_id: Optional[UUID] = None,
-        data: Optional[BaseModel] = CreateMenuSchema,
+        obj_id: UUID | None = None,
+        data: BaseModel = CreateMenuSchema,
         session: AsyncSession = Depends(get_async_session)
 ) -> Menu | Submenu | Dish:
     """Универсальная функция для создания меню/подменю/блюда."""
@@ -54,7 +52,7 @@ async def create_db_obj(
     return stmt
 
 
-def check_db_obj(obj: Optional[DefaultModel] = None, name: str = None) -> None:
+def check_db_obj(obj: DefaultModel | tuple, name: str) -> None:
     """Универсальная функция для проверки существования полученного объекта,
     передаёт исключению аргумент в виде названия/типа объекта для дальнейших действий."""
 

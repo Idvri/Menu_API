@@ -1,17 +1,14 @@
-from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-
-from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
-from starlette.responses import JSONResponse
-
-from sqlalchemy.exc import NoResultFound, IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
+from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 from src import get_async_session
-from src.schemas import MessageSchema, DishSchema, CreateDishSchema
-from src.utils import get_dishes_db, create_db_obj, get_dish_db
+from src.schemas import CreateDishSchema, DishSchema, MessageSchema
+from src.utils import create_db_obj, get_dish_db, get_dishes_db
 
 router = APIRouter(
     prefix='/dishes',
@@ -20,7 +17,7 @@ router = APIRouter(
 
 @router.get(
     '/',
-    response_model=List[DishSchema],
+    response_model=list[DishSchema],
     status_code=HTTP_200_OK,
     responses={HTTP_404_NOT_FOUND: {'model': MessageSchema}},
     tags=['Dish'],

@@ -1,4 +1,4 @@
-from .menu import MenuSchema, CreateMenuSchema
+from .menu import CreateMenuSchema, MenuSchema
 
 
 class DishSchema(MenuSchema):

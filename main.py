@@ -1,13 +1,10 @@
-from requests import Request
-
-from fastapi import FastAPI, APIRouter
-
-from src.routers import menu_router, submenu_router, dish_router
-
+from fastapi import APIRouter, FastAPI
+from httpx import Request
 from sqlalchemy.exc import NoResultFound
-
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_404_NOT_FOUND
+
+from src.routers import dish_router, menu_router, submenu_router
 
 app = FastAPI(
     title='Menu API.'

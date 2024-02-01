@@ -1,7 +1,4 @@
-from typing import List
-
 from fastapi import Depends
-
 from sqlalchemy import UUID, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +6,7 @@ from src import Dish, get_async_session
 from src.utils.universal import check_db_obj
 
 
-async def get_dishes_db(submenu_id: UUID, session: AsyncSession = Depends(get_async_session)) -> List[Dish]:
+async def get_dishes_db(submenu_id: UUID, session: AsyncSession = Depends(get_async_session)) -> list[Dish]:
     """Функция для получения списка блюд."""
 
     query = select(Dish).where(Dish.submenu_id == submenu_id)

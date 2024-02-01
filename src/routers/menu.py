@@ -1,17 +1,23 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-
-from typing import List
-
-from starlette.status import HTTP_201_CREATED, HTTP_200_OK, HTTP_404_NOT_FOUND
-from starlette.responses import JSONResponse
-
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import JSONResponse
+from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 from src import get_async_session
-from src.schemas import MenuSchema, CreateMenuSchema, MenuSchemaWithCounters, MessageSchema
-from src.utils import create_db_obj, get_menu_db, get_menu_db_with_counters, get_menus_db
+from src.schemas import (
+    CreateMenuSchema,
+    MenuSchema,
+    MenuSchemaWithCounters,
+    MessageSchema,
+)
+from src.utils import (
+    create_db_obj,
+    get_menu_db,
+    get_menu_db_with_counters,
+    get_menus_db,
+)
 
 router = APIRouter(
     prefix='/menus',
@@ -20,7 +26,7 @@ router = APIRouter(
 
 @router.get(
     '/',
-    response_model=List[MenuSchema],
+    response_model=list[MenuSchema],
     tags=['Menu'],
 )
 async def get_menus(
