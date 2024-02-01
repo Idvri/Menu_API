@@ -191,7 +191,7 @@ async def test_delete_menu():
         assert response.json() == {'message': 'Success.'}
         # Тестирую 1 исключение.
         response = await ac.delete(
-            url=app.url_path_for('update_menu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b8')
+            url=app.url_path_for('delete_menu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b8')
         )
         assert response.status_code == 404
         assert response.json() == {
