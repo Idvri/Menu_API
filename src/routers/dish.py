@@ -8,7 +8,7 @@ from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 from src import get_async_session
 from src.schemas import CreateDishSchema, DishSchema, MessageSchema
-from src.utils import create_db_obj, get_dish_db, get_dishes_db
+from src.utils import check_db_obj, create_db_obj, get_dish_db, get_dishes_db
 
 router = APIRouter(
     prefix='/dishes',
@@ -69,6 +69,7 @@ async def get_dish(
     """Эндпойнт для получения подменю."""
 
     dish = await get_dish_db(target_dish_id, session)
+    check_db_obj(dish, 'dish')
     return dish
 
 
@@ -86,6 +87,7 @@ async def update_dish(
     """Эндпойнт для изменения блюда."""
 
     dish = await get_dish_db(target_dish_id, session)
+    check_db_obj(dish, 'dish')
     dish.title = data.title
     dish.description = data.description
     dish.price = data.price
@@ -108,6 +110,7 @@ async def delete_dish(
     """Эндпойнт для удаления блюда."""
 
     dish = await get_dish_db(target_dish_id, session)
+    check_db_obj(dish, 'dish')
     await session.delete(dish)
     await session.commit()
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)

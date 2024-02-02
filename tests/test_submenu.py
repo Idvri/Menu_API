@@ -149,7 +149,7 @@ async def test_update_submenu():
         }
         response = await ac.patch(
             url=app.url_path_for(
-                'get_submenu',
+                'update_submenu',
                 target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b4',
                 target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4444b'
             ),
@@ -164,7 +164,7 @@ async def test_update_submenu():
         # Тестирую 1 исключение.
         response = await ac.patch(
             url=app.url_path_for(
-                'get_submenu',
+                'update_submenu',
                 target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b4',
                 target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b8'
             ),
@@ -177,7 +177,7 @@ async def test_update_submenu():
         # Тестирую 2 исключение.
         response = await ac.patch(
             url=app.url_path_for(
-                'get_submenu',
+                'update_submenu',
                 target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b4',
                 target_submenu_id='7f59f0a0-db4a-4b'
             ),

@@ -13,6 +13,7 @@ from src.schemas import (
     MessageSchema,
 )
 from src.utils import (
+    check_db_obj,
     create_db_obj,
     get_menu_db,
     get_menu_db_with_counters,
@@ -66,6 +67,7 @@ async def get_menu(
     """Эндпойнт для получения определенного меню."""
 
     menu = await get_menu_db_with_counters(target_menu_id, session)
+    check_db_obj(menu, 'menu')
     return menu
 
 
@@ -83,6 +85,7 @@ async def update_menu(
     """Эндпойнт для изменения определенного меню."""
 
     menu = await get_menu_db(target_menu_id, session)
+    check_db_obj(menu, 'menu')
     menu.title = data.title
     menu.description = data.description
     await session.commit()
@@ -104,6 +107,7 @@ async def delete_menu(
     """Эндпойнт для удаления определенного меню."""
 
     menu = await get_menu_db(target_menu_id, session)
+    check_db_obj(menu, 'menu')
     await session.delete(menu)
     await session.commit()
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)

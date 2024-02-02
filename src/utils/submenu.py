@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from src import Dish, Submenu, get_async_session
-from src.utils.universal import check_db_obj
 
 
 async def get_submenus_db(
@@ -20,16 +19,14 @@ async def get_submenus_db(
 
 
 async def get_submenu_db(
-        menu_id: UUID,
         submenu_id: UUID,
         session: AsyncSession = Depends(get_async_session)
 ) -> Submenu:
     """Функция для получения подменю."""
 
-    query = select(Submenu).where(Submenu.menu_id == menu_id, Submenu.id == submenu_id)
+    query = select(Submenu).where(Submenu.id == submenu_id)
     result = await session.execute(query)
-    submenu = result.scalars().unique().one()
-    check_db_obj(submenu, 'submenu')
+    submenu = result.scalars().unique().one_or_none()
     return submenu
 
 

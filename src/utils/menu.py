@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from src import Dish, Menu, Submenu, get_async_session
-from src.utils.universal import check_db_obj
 
 
 async def get_menus_db(
@@ -24,7 +23,6 @@ async def get_menu_db(target_id: UUID, session: AsyncSession = Depends(get_async
     query = select(Menu).where(Menu.id == target_id)
     result = await session.execute(query)
     menu = result.scalars().unique().one_or_none()
-    check_db_obj(menu, 'menu')
     return menu
 
 
@@ -49,5 +47,4 @@ async def get_menu_db_with_counters(menu_id: UUID, session: AsyncSession = Depen
     )
     result = await session.execute(query)
     menu = result.unique().one_or_none()
-    check_db_obj(menu, 'menu')
     return menu

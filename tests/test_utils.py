@@ -13,13 +13,13 @@ from tests import override_get_async_session
 async def test_get_menu_db():
     """Тест функции для получения меню с выводом кол-ва подменю и блюд."""
 
-    async with AsyncClient(app=app, base_url='http://localhost:8000/api/v1/menus', follow_redirects=True) as ac:
+    async with AsyncClient(app=app, base_url='http://localhost:8000', follow_redirects=True) as ac:
         data = {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f441a2',
             'title': 'string',
             'description': 'string'
         }
-        await ac.post(url='/', content=json.dumps(data))
+        await ac.post(url=app.url_path_for('create_menu'), content=json.dumps(data))
 
     gen = override_get_async_session()
     awaitable = anext(gen)
@@ -35,7 +35,7 @@ async def test_get_submenu_db():
 
     async with AsyncClient(
             app=app,
-            base_url='http://localhost:8000/api/v1/menus/7f59f0a0-db4a-4b8f-a832-f63796f448b4/submenus',
+            base_url='http://localhost:8000',
             follow_redirects=True
     ) as ac:
         data = {
@@ -43,7 +43,10 @@ async def test_get_submenu_db():
             'title': 'string',
             'description': 'string'
         }
-        await ac.post(url='/', content=json.dumps(data))
+        await ac.post(
+            url=app.url_path_for('create_submenu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f448b4'),
+            content=json.dumps(data)
+        )
 
     gen = override_get_async_session()
     awaitable = anext(gen)

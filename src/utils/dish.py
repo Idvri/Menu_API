@@ -3,7 +3,6 @@ from sqlalchemy import UUID, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import Dish, get_async_session
-from src.utils.universal import check_db_obj
 
 
 async def get_dishes_db(submenu_id: UUID, session: AsyncSession = Depends(get_async_session)) -> list[Dish]:
@@ -21,5 +20,4 @@ async def get_dish_db(dish_id: UUID, session: AsyncSession = Depends(get_async_s
     query = select(Dish).where(Dish.id == dish_id)
     result = await session.execute(query)
     dish = result.scalars().unique().one_or_none()
-    check_db_obj(dish, 'dish')
     return dish

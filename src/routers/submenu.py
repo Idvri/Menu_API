@@ -93,14 +93,14 @@ async def get_submenu(
     tags=['Submenu'],
 )
 async def update_submenu(
-        target_menu_id: UUID,
         target_submenu_id: UUID,
         data: CreateSubmenuSchema,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для изменения подменю."""
 
-    submenu = await get_submenu_db(target_menu_id, target_submenu_id, session)
+    submenu = await get_submenu_db(target_submenu_id, session)
+    check_db_obj(submenu, 'submenu')
     submenu.title = data.title
     submenu.description = data.description
     await session.commit()
@@ -116,13 +116,13 @@ async def update_submenu(
     tags=['Submenu'],
 )
 async def delete_submenu(
-        target_menu_id: UUID,
         target_submenu_id: UUID,
         session: AsyncSession = Depends(get_async_session),
 ):
     """Эндпойнт для удаления подменю."""
 
-    submenu = await get_submenu_db(target_menu_id, target_submenu_id, session)
+    submenu = await get_submenu_db(target_submenu_id, session)
+    check_db_obj(submenu, 'submenu')
     for dish in submenu.dishes:
         await session.delete(dish)
     await session.delete(submenu)
