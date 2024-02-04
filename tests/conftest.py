@@ -13,6 +13,7 @@ from src import (
     DB_PORT_TEST,
     DB_USER_TEST,
     Base,
+    get_async_redis_client,
     get_async_session,
 )
 
@@ -40,4 +41,8 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine_test.begin() as conn:
+        gen = get_async_redis_client()
+        awaitable = anext(gen)
+        redis_client = await awaitable
+        await redis_client.flushdb()
         await conn.run_sync(Base.metadata.drop_all)

@@ -2,7 +2,7 @@ import json
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from redis.asyncio import Redis  # type: ignore
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
@@ -38,9 +38,9 @@ async def get_menus(
 ):
     """Эндпойнт для получения всех меню."""
 
-    cashed_menus = await redis_client.get('menus')
-    if cashed_menus:
-        return json.loads(cashed_menus)
+    cached_menus = await redis_client.get('menus')
+    if cached_menus:
+        return json.loads(cached_menus)
 
     menus = await get_menus_db(session)
     return menus
@@ -62,11 +62,11 @@ async def create_menu(
 
     menu = await create_db_obj(data=data, session=session)
 
-    cashed_menus = await redis_client.get('menus')
-    if not cashed_menus:
+    cached_menus = await redis_client.get('menus')
+    if not cached_menus:
         menus = []
     else:
-        menus = json.loads(cashed_menus)
+        menus = json.loads(cached_menus)
     menu_for_cache = {
         'id': str(menu.id),
         'title': menu.title,
@@ -74,6 +74,15 @@ async def create_menu(
     }
     menus.append(menu_for_cache)
     await redis_client.set(name='menus', value=json.dumps(menus), ex=300)
+
+    menu_for_cache = {
+        'id': str(menu.id),
+        'title': menu.title,
+        'description': menu.description,
+        'submenus_count': 0,
+        'dishes_count': 0,
+    }
+    await redis_client.set(name=menu_for_cache['id'], value=json.dumps(menu_for_cache), ex=300)
 
     return menu
 
@@ -97,16 +106,6 @@ async def get_menu(
 
     menu = await get_menu_db_with_counters(target_menu_id, session)
     check_db_obj(menu, 'menu')
-
-    menu_for_cache = {
-        'id': str(menu[0]),
-        'title': menu[1],
-        'description': menu[2],
-        'submenus_count': menu[3],
-        'dishes_count': menu[4],
-    }
-    await redis_client.set(name=menu_for_cache['id'], value=json.dumps(menu_for_cache), ex=300)
-
     return menu
 
 
@@ -161,9 +160,22 @@ async def delete_menu(
     await session.commit()
 
     await redis_client.delete(str(menu.id))
-    cashed_menus = json.loads(await redis_client.get('menus'))
-    item = [item for item in cashed_menus if item['id'] == str(menu.id)]
-    cashed_menus.remove(item[0])
-    await redis_client.set(name='menus', value=json.dumps(cashed_menus), ex=300)
+    cached_menus = json.loads(str(await redis_client.get('menus')))
+    item = [item for item in cached_menus if item['id'] == str(menu.id)]
+    cached_menus.remove(item[0])
+    await redis_client.set(name='menus', value=json.dumps(cached_menus), ex=300)
+
+    cached_submenus = await redis_client.get(f'{menu.id} submenus')
+    if cached_submenus:
+        cached_submenus = json.loads(cached_submenus)
+        for cached_submenu in cached_submenus:
+            cached_dishes = await redis_client.get(f'{cached_submenu["id"]} dishes')
+            if cached_dishes:
+                cached_dishes = json.loads(cached_dishes)
+                for cached_dish in cached_dishes:
+                    await redis_client.delete(cached_dish['id'])
+                await redis_client.delete(f'{cached_submenu["id"]} dishes')
+            await redis_client.delete(cached_submenu['id'])
+        await redis_client.delete(f'{menu.id} submenus')
 
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)
