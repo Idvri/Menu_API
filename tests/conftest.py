@@ -1,14 +1,21 @@
 from typing import AsyncGenerator
 
 import pytest
-
-from main import app
-
 from sqlalchemy import NullPool
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from src import DB_USER_TEST, DB_PASS_TEST, DB_HOST_TEST, DB_PORT_TEST, DB_NAME_TEST, get_async_session, Base
+from main import app
+from src import (
+    DB_HOST_TEST,
+    DB_NAME_TEST,
+    DB_PASS_TEST,
+    DB_PORT_TEST,
+    DB_USER_TEST,
+    Base,
+    get_async_redis_client,
+    get_async_session,
+)
 
 DATABASE_URL_TEST = f'postgresql+asyncpg://{DB_USER_TEST}:{DB_PASS_TEST}@{DB_HOST_TEST}:{DB_PORT_TEST}/{DB_NAME_TEST}'
 
@@ -34,4 +41,8 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine_test.begin() as conn:
+        gen = get_async_redis_client()
+        awaitable = anext(gen)
+        redis_client = await awaitable
+        await redis_client.flushdb()
         await conn.run_sync(Base.metadata.drop_all)

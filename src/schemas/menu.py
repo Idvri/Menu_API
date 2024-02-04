@@ -1,5 +1,3 @@
-from typing import Text, Optional
-
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -10,15 +8,15 @@ class MenuSchema(BaseModel):
 
     id: UUID
     title: str
-    description: Text
+    description: str
 
 
 class CreateMenuSchema(BaseModel):
     """Pydantic схема для создания меню."""
 
-    id: Optional[UUID] = None
+    id: UUID | None = None
     title: str
-    description: Text
+    description: str
 
 
 class MenuSchemaWithCounters(MenuSchema):

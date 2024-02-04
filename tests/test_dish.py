@@ -1,6 +1,6 @@
 import json
-import pytest
 
+import pytest
 from httpx import AsyncClient
 
 from main import app
@@ -12,7 +12,7 @@ async def test_get_dishes():
 
     async with AsyncClient(
             app=app,
-            base_url='http://localhost:8000/api/v1/menus',
+            base_url='http://localhost:8000',
             follow_redirects=True
     ) as ac:
         data = {
@@ -20,17 +20,24 @@ async def test_get_dishes():
             'title': 'string',
             'description': 'string'
         }
-        await ac.post(url='/', content=json.dumps(data))
+        await ac.post(url=app.url_path_for('create_menu'), content=json.dumps(data))
 
         data = {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f4449b',
             'title': 'string',
             'description': 'string'
         }
-        await ac.post(url='/7f59f0a0-db4a-4b8f-a832-f63796f4443b/submenus/', content=json.dumps(data))
+        await ac.post(
+            url=app.url_path_for('create_submenu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b'),
+            content=json.dumps(data)
+        )
 
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f4443b/submenus/7f59f0a0-db4a-4b8f-a832-f63796f4449b/dishes/'
+            url=app.url_path_for(
+                'get_dishes',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b'
+            ),
         )
         assert response.status_code == 200
         assert response.json() == []
@@ -42,8 +49,7 @@ async def test_create_dish():
 
     async with AsyncClient(
             app=app,
-            base_url='http://localhost:8000/api/v1/menus/7f59f0a0-db4a-4b8f-a832-f63796f4443b/submenus/'
-                     '7f59f0a0-db4a-4b8f-a832-f63796f4449b/dishes',
+            base_url='http://localhost:8000',
             follow_redirects=True
     ) as ac:
         # Тестирую положительный ответ.
@@ -53,7 +59,14 @@ async def test_create_dish():
             'description': 'string',
             'price': '10'
         }
-        response = await ac.post(url='/', content=json.dumps(data))
+        response = await ac.post(
+            url=app.url_path_for(
+                'create_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b'
+            ),
+            content=json.dumps(data)
+        )
         assert response.status_code == 201
         assert response.json() == {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f4466b',
@@ -65,7 +78,14 @@ async def test_create_dish():
         data = {
             'description': 'string'
         }
-        response = await ac.post(url='/', content=json.dumps(data))
+        response = await ac.post(
+            url=app.url_path_for(
+                'create_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b'
+            ),
+            content=json.dumps(data)
+        )
         assert response.status_code == 422
         assert response.json() == {
             'detail': [
@@ -93,14 +113,17 @@ async def test_get_dish():
 
     async with AsyncClient(
             app=app,
-            base_url='http://localhost:8000/api/v1/menus/7f59f0a0-db4a-4b8f-a832-f63796f4443b/submenus/'
-                     '7f59f0a0-db4a-4b8f-a832-f63796f4449b/dishes',
+            base_url='http://localhost:8000',
             follow_redirects=True
     ) as ac:
         # Тестирую положительный ответ.
-
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f4466b',
+            url=app.url_path_for(
+                'get_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b8f-a832-f63796f4466b'
+            )
         )
         assert response.status_code == 200
         assert response.json() == {
@@ -111,7 +134,12 @@ async def test_get_dish():
         }
         # Тестирую 1 исключение.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f448b8',
+            url=app.url_path_for(
+                'get_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b8f-a832-f63796f448b8'
+            )
         )
         assert response.status_code == 404
         assert response.json() == {
@@ -119,7 +147,12 @@ async def test_get_dish():
         }
         # Тестирую 2 исключение.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b'
+            url=app.url_path_for(
+                'get_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b'
+            )
         )
         assert response.status_code == 422
         assert response.json() == {'detail': [
@@ -140,8 +173,7 @@ async def test_update_dish():
 
     async with AsyncClient(
             app=app,
-            base_url='http://localhost:8000/api/v1/menus/7f59f0a0-db4a-4b8f-a832-f63796f4443b/submenus/'
-                     '7f59f0a0-db4a-4b8f-a832-f63796f4449b/dishes',
+            base_url='http://localhost:8000',
             follow_redirects=True
     ) as ac:
         # Тестирую положительный ответ.
@@ -150,7 +182,15 @@ async def test_update_dish():
             'description': 'test patched description',
             'price': '12',
         }
-        response = await ac.patch(url='/7f59f0a0-db4a-4b8f-a832-f63796f4466b', content=json.dumps(data))
+        response = await ac.patch(
+            url=app.url_path_for(
+                'update_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b8f-a832-f63796f4466b'
+            ),
+            content=json.dumps(data)
+        )
         assert response.status_code == 200
         assert response.json() == {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f4466b',
@@ -159,13 +199,29 @@ async def test_update_dish():
             'price': '12'
         }
         # Тестирую 1 исключение.
-        response = await ac.patch(url='/7f59f0a0-db4a-4b8f-a832-f63796f448b8', content=json.dumps(data))
+        response = await ac.patch(
+            url=app.url_path_for(
+                'update_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b8f-a832-f63796f448b8'
+            ),
+            content=json.dumps(data)
+        )
         assert response.status_code == 404
         assert response.json() == {
             'detail': 'dish not found'
         }
         # Тестирую 2 исключение.
-        response = await ac.patch(url='/7f59f0a0-db4a-4b', content=json.dumps(data))
+        response = await ac.patch(
+            url=app.url_path_for(
+                'update_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b'
+            ),
+            content=json.dumps(data)
+        )
         assert response.status_code == 422
         assert response.json() == {
             'detail': [
@@ -186,17 +242,28 @@ async def test_delete_dish():
 
     async with AsyncClient(
             app=app,
-            base_url='http://localhost:8000/api/v1/menus/7f59f0a0-db4a-4b8f-a832-f63796f4443b/submenus/'
-                     '7f59f0a0-db4a-4b8f-a832-f63796f4449b/dishes',
+            base_url='http://localhost:8000',
             follow_redirects=True
     ) as ac:
         # Тестирую положительный ответ.
-        response = await ac.delete(url='/7f59f0a0-db4a-4b8f-a832-f63796f4466b')
+        response = await ac.delete(
+            url=app.url_path_for(
+                'delete_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b8f-a832-f63796f4466b'
+            )
+        )
         assert response.status_code == 200
         assert response.json() == {'message': 'Success.'}
         # Тестирую 1 исключение.
         response = await ac.delete(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f448b8',
+            url=app.url_path_for(
+                'delete_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b8f-a832-f63796f448b8'
+            )
         )
         assert response.status_code == 404
         assert response.json() == {
@@ -204,7 +271,12 @@ async def test_delete_dish():
         }
         # Тестирую 2 исключение.
         response = await ac.delete(
-            url='/7f59f0a0-db4a-4b'
+            url=app.url_path_for(
+                'delete_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f4443b',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f4449b',
+                target_dish_id='7f59f0a0-db4a-4b'
+            )
         )
         assert response.status_code == 422
         assert response.json() == {

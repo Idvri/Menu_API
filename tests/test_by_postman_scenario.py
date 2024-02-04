@@ -1,7 +1,6 @@
-import pytest
-
 import json
 
+import pytest
 from httpx import AsyncClient
 
 from main import app
@@ -9,14 +8,14 @@ from main import app
 
 @pytest.mark.asyncio
 async def test_by_postman_scenario():
-    async with AsyncClient(app=app, base_url='http://localhost:8000/api/v1/menus', follow_redirects=True) as ac:
+    async with AsyncClient(app=app, base_url='http://localhost:8000', follow_redirects=True) as ac:
         # Создает меню.
         data = {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f443b7',
             'title': 'test title',
             'description': 'test description'
         }
-        response = await ac.post(url='/', content=json.dumps(data))
+        response = await ac.post(url=app.url_path_for('create_menu'), content=json.dumps(data))
         assert response.status_code == 201
         assert response.json() == {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f443b7',
@@ -29,7 +28,10 @@ async def test_by_postman_scenario():
             'title': 'test title',
             'description': 'test description'
         }
-        response = await ac.post(url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/', content=json.dumps(data))
+        response = await ac.post(
+            url=app.url_path_for('create_submenu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7'),
+            content=json.dumps(data)
+        )
         assert response.status_code == 201
         assert response.json() == {
             'id': '7f59f0a0-db4a-4b8f-a832-f63796f443b5',
@@ -44,7 +46,11 @@ async def test_by_postman_scenario():
             'price': '10'
         }
         response = await ac.post(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/7f59f0a0-db4a-4b8f-a832-f63796f443b5/dishes/',
+            url=app.url_path_for(
+                'create_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b5'
+            ),
             content=json.dumps(data)
         )
         assert response.status_code == 201
@@ -62,7 +68,11 @@ async def test_by_postman_scenario():
             'price': '10'
         }
         response = await ac.post(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/7f59f0a0-db4a-4b8f-a832-f63796f443b5/dishes/',
+            url=app.url_path_for(
+                'create_dish',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b5'
+            ),
             content=json.dumps(data)
         )
         assert response.status_code == 201
@@ -74,7 +84,7 @@ async def test_by_postman_scenario():
         }
         # Просматривает определенное меню.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/',
+            url=app.url_path_for('get_menu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7')
         )
         assert response.status_code == 200
         assert response.json() == {
@@ -86,7 +96,11 @@ async def test_by_postman_scenario():
         }
         # Просматривает определенное подменю.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/7f59f0a0-db4a-4b8f-a832-f63796f443b5/',
+            url=app.url_path_for(
+                'get_submenu',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b5'
+            ),
         )
         assert response.status_code == 200
         assert response.json() == {
@@ -97,25 +111,32 @@ async def test_by_postman_scenario():
         }
         # Удаляет определенное подменю.
         response = await ac.delete(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/7f59f0a0-db4a-4b8f-a832-f63796f443b5/'
+            url=app.url_path_for(
+                'delete_submenu',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b5')
         )
         assert response.status_code == 200
         assert response.json() == {'message': 'Success.'}
         # Просматривает список подменю определенного меню.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/',
+            url=app.url_path_for('get_submenus', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7')
         )
         assert response.status_code == 200
         assert response.json() == []
         # Просматривает список блюд определенного подменю.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/submenus/7f59f0a0-db4a-4b8f-a832-f63796f443b5/dishes/',
+            url=app.url_path_for(
+                'get_dishes',
+                target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7',
+                target_submenu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b5'
+            ),
         )
         assert response.status_code == 200
         assert response.json() == []
         # Просматривает определенное меню.
         response = await ac.get(
-            url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/',
+            url=app.url_path_for('get_menu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7')
         )
         assert response.status_code == 200
         assert response.json() == {
@@ -126,10 +147,12 @@ async def test_by_postman_scenario():
             'dishes_count': 0
         }
         # Удаляет определенное меню.
-        response = await ac.delete(url='/7f59f0a0-db4a-4b8f-a832-f63796f443b7/')
+        response = await ac.delete(
+            url=app.url_path_for('delete_menu', target_menu_id='7f59f0a0-db4a-4b8f-a832-f63796f443b7')
+        )
         assert response.status_code == 200
         assert response.json() == {'message': 'Success.'}
         # Просматривает список меню.
-        response = await ac.get(url='/')
+        response = await ac.get(url=app.url_path_for('get_menus'))
         assert response.status_code == 200
         assert response.json() == []

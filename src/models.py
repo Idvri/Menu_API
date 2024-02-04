@@ -1,8 +1,6 @@
 import uuid
 
-from typing import List
-
-from sqlalchemy import String, ForeignKey, Text, Uuid
+from sqlalchemy import ForeignKey, String, Text, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src import Base
@@ -21,7 +19,7 @@ class Menu(DefaultModel, Base):
 
     __tablename__ = 'menu'
 
-    submenus: Mapped[List['Submenu']] = relationship(back_populates='menu', lazy=False)
+    submenus: Mapped[list['Submenu']] = relationship(back_populates='menu', lazy=False)
 
 
 class Submenu(DefaultModel, Base):
@@ -35,7 +33,7 @@ class Submenu(DefaultModel, Base):
     )
     menu: Mapped['Menu'] = relationship(back_populates='submenus')
 
-    dishes: Mapped[List['Dish']] = relationship(back_populates='submenu', lazy=False)
+    dishes: Mapped[list['Dish']] = relationship(back_populates='submenu', lazy=False)
 
 
 class Dish(DefaultModel, Base):
