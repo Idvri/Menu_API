@@ -1,11 +1,11 @@
 from typing import AsyncGenerator
 
-from redis.asyncio import Redis  # type: ignore
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import declarative_base
 
-from src import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER
+from src import DB_HOST, DB_NAME, DB_PASS, DB_PORT, DB_USER, REDIS_HOST, REDIS_PORT
 
 DATABASE_URL = f'postgresql+asyncpg://{DB_USER}:{DB_PASS}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 
@@ -22,8 +22,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_async_redis_client() -> AsyncGenerator[Redis, None]:
+async def get_async_redis_client(host: str = REDIS_HOST, port: str = REDIS_PORT) -> AsyncGenerator[Redis, None]:
     """Функция получения redis_client'а для работы с кэшом."""
 
-    async with Redis() as redis_client:
+    async with Redis(host=host, port=int(port)) as redis_client:
         yield redis_client
