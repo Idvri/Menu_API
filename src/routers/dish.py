@@ -85,13 +85,17 @@ async def create_dish(
     }
     await redis_client.set(name=dish_for_cache['id'], value=json.dumps(dish_for_cache), ex=300)
 
-    cached_menu = json.loads(str(await redis_client.get(str(target_menu_id))))
-    cached_menu['dishes_count'] += 1
-    await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
+    cached_menu = await redis_client.get(str(target_menu_id))
+    if cached_menu:
+        cached_menu = json.loads(cached_menu)
+        cached_menu['dishes_count'] += 1
+        await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
 
-    cached_submenu = json.loads(str(await redis_client.get(str(target_submenu_id))))
-    cached_submenu['dishes_count'] += 1
-    await redis_client.set(name=cached_submenu['id'], value=json.dumps(cached_submenu), ex=300)
+    cached_submenu = await redis_client.get(str(target_submenu_id))
+    if cached_submenu:
+        cached_submenu = json.loads(cached_submenu)
+        cached_submenu['dishes_count'] += 1
+        await redis_client.set(name=cached_submenu['id'], value=json.dumps(cached_submenu), ex=300)
 
     return dish
 
@@ -126,6 +130,7 @@ async def get_dish(
     tags=['Dish'],
 )
 async def update_dish(
+        target_submenu_id: UUID,
         target_dish_id: UUID,
         data: CreateDishSchema,
         session: AsyncSession = Depends(get_async_session),
@@ -147,6 +152,23 @@ async def update_dish(
         cache_to_change['description'] = dish.description
         cache_to_change['price'] = dish.price
         await redis_client.set(name=cache_to_change['id'], value=json.dumps(cache_to_change), ex=300)
+
+    cashed_dishes = await redis_client.get(f'{target_submenu_id} dishes')
+    if not cashed_dishes:
+        dishes = []
+    else:
+        dishes = json.loads(cashed_dishes)
+    dish_for_cache = {
+        'id': str(dish.id),
+        'title': dish.title,
+        'description': dish.description,
+        'price': dish.price,
+    }
+    for dish_from_cache in dishes:
+        if dish_from_cache['id'] == str(dish.id):
+            dishes.remove(dish_from_cache)
+    dishes.append(dish_for_cache)
+    await redis_client.set(name=f'{target_submenu_id} dishes', value=json.dumps(dishes), ex=300)
 
     return dish
 
@@ -174,17 +196,23 @@ async def delete_dish(
     await session.commit()
 
     await redis_client.delete(str(dish.id))
-    cashed_dishes = json.loads(str(await redis_client.get(f'{target_submenu_id} dishes')))
-    item = [item for item in cashed_dishes if item['id'] == str(dish.id)]
-    cashed_dishes.remove(item[0])
-    await redis_client.set(name=f'{target_submenu_id} dishes', value=json.dumps(cashed_dishes), ex=300)
+    cashed_dishes = await redis_client.get(f'{target_submenu_id} dishes')
+    if cashed_dishes:
+        cashed_dishes = json.loads(cashed_dishes)
+        item = [item for item in cashed_dishes if item['id'] == str(dish.id)]
+        cashed_dishes.remove(item[0])
+        await redis_client.set(name=f'{target_submenu_id} dishes', value=json.dumps(cashed_dishes), ex=300)
 
-    cached_menu = json.loads(str(await redis_client.get(str(target_menu_id))))
-    cached_menu['dishes_count'] -= 1
-    await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
+    cached_menu = await redis_client.get(str(target_menu_id))
+    if cached_menu:
+        cached_menu = json.loads(cached_menu)
+        cached_menu['dishes_count'] -= 1
+        await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
 
-    cached_submenu = json.loads(str(await redis_client.get(str(target_submenu_id))))
-    cached_submenu['dishes_count'] -= 1
-    await redis_client.set(name=cached_submenu['id'], value=json.dumps(cached_submenu), ex=300)
+    cached_submenu = await redis_client.get(str(target_submenu_id))
+    if cached_submenu:
+        cached_submenu = json.loads(cached_submenu)
+        cached_submenu['dishes_count'] -= 1
+        await redis_client.set(name=cached_submenu['id'], value=json.dumps(cached_submenu), ex=300)
 
     return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)

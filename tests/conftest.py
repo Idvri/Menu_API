@@ -1,6 +1,7 @@
 from typing import AsyncGenerator
 
 import pytest
+from redis.asyncio import Redis
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -12,6 +13,8 @@ from src import (
     DB_PASS_TEST,
     DB_PORT_TEST,
     DB_USER_TEST,
+    REDIS_HOST_TEST,
+    REDIS_PORT_TEST,
     Base,
     get_async_redis_client,
     get_async_session,
@@ -30,7 +33,17 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+async def override_get_async_redis_client(
+        host: str = REDIS_HOST_TEST, port: str = REDIS_PORT_TEST
+) -> AsyncGenerator[Redis, None]:
+    """Функция получения redis_client'а для работы с кэшом."""
+
+    async with Redis(host=host, port=int(port)) as redis_client:
+        yield redis_client
+
+
 app.dependency_overrides[get_async_session] = override_get_async_session
+app.dependency_overrides[get_async_redis_client] = override_get_async_redis_client
 
 
 @pytest.fixture(autouse=True, scope='session')
@@ -41,7 +54,7 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine_test.begin() as conn:
-        gen = get_async_redis_client()
+        gen = get_async_redis_client(REDIS_HOST_TEST, REDIS_PORT_TEST)
         awaitable = anext(gen)
         redis_client = await awaitable
         await redis_client.flushdb()

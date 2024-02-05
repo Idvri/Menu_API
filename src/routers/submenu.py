@@ -88,9 +88,11 @@ async def create_submenu(
     submenus.append(submenu_for_cache)
     await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(submenus), ex=300)
 
-    cached_menu = json.loads(str(await redis_client.get(str(target_menu_id))))
-    cached_menu['submenus_count'] += 1
-    await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
+    cached_menu = await redis_client.get(str(target_menu_id))
+    if cached_menu:
+        cached_menu = json.loads(cached_menu)
+        cached_menu['submenus_count'] += 1
+        await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
 
     submenu_for_cache = {
         'id': str(submenu.id),
@@ -132,6 +134,7 @@ async def get_submenu(
     tags=['Submenu'],
 )
 async def update_submenu(
+        target_menu_id: UUID,
         target_submenu_id: UUID,
         data: CreateSubmenuSchema,
         session: AsyncSession = Depends(get_async_session),
@@ -151,6 +154,17 @@ async def update_submenu(
         cache_to_change['title'] = submenu.title
         cache_to_change['description'] = submenu.description
         await redis_client.set(name=cache_to_change['id'], value=json.dumps(cache_to_change), ex=300)
+
+    cached_submenus = await redis_client.get(f'{target_menu_id} submenus')
+    if cached_submenus:
+        cached_submenus = json.loads(cached_submenus)
+        for cache_submenu in cached_submenus:
+            if cache_submenu['id'] == str(target_submenu_id):
+                cached_submenus.remove(cache_submenu)
+                cache_submenu['title'] = submenu.title
+                cache_submenu['description'] = submenu.description
+                cached_submenus.append(cache_submenu)
+                await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(cached_submenus), ex=300)
 
     return submenu
 
@@ -178,18 +192,25 @@ async def delete_submenu(
     await session.delete(submenu)
     await session.commit()
 
-    cashed_dishes_count = json.loads(str(await redis_client.get(str(submenu.id))))['dishes_count']
+    cached_submenu_with_dishes_count = await redis_client.get(str(submenu.id))
 
     await redis_client.delete(str(submenu.id))
-    cashed_submenus = json.loads(str(await redis_client.get(f'{target_menu_id} submenus')))
-    item = [item for item in cashed_submenus if item['id'] == str(submenu.id)]
-    cashed_submenus.remove(item[0])
-    await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(cashed_submenus), ex=300)
+    cashed_submenus = await redis_client.get(f'{target_menu_id} submenus')
+    if cashed_submenus:
+        cashed_submenus = json.loads(cashed_submenus)
+        item = [item for item in cashed_submenus if item['id'] == str(submenu.id)]
+        cashed_submenus.remove(item[0])
+        await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(cashed_submenus), ex=300)
 
-    cached_menu = json.loads(str(await redis_client.get(str(target_menu_id))))
-    cached_menu['submenus_count'] -= 1
-    cached_menu['dishes_count'] -= cashed_dishes_count
-    await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
+    cached_menu = await redis_client.get(str(target_menu_id))
+    if cached_menu:
+        cached_menu = json.loads(cached_menu)
+        if cached_submenu_with_dishes_count:
+            cached_dishes_count = json.loads(cached_submenu_with_dishes_count)['dishes_count']
+            if cached_dishes_count > 0:
+                cached_menu['dishes_count'] -= cached_dishes_count
+        cached_menu['submenus_count'] -= 1
+        await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
 
     cached_dishes = await redis_client.get(f'{target_submenu_id} dishes')
     if cached_dishes:

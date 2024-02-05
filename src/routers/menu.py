@@ -136,6 +136,17 @@ async def update_menu(
         cache_to_change['description'] = menu.description
         await redis_client.set(name=cache_to_change['id'], value=json.dumps(cache_to_change), ex=300)
 
+    cached_menus = await redis_client.get('menus')
+    if cached_menus:
+        cached_menus = json.loads(cached_menus)
+        for cache_menu in cached_menus:
+            if cache_menu['id'] == str(target_menu_id):
+                cached_menus.remove(cache_menu)
+                cache_menu['title'] = menu.title
+                cache_menu['description'] = menu.description
+                cached_menus.append(cache_menu)
+                await redis_client.set(name='menus', value=json.dumps(cached_menus), ex=300)
+
     return menu
 
 
@@ -158,12 +169,13 @@ async def delete_menu(
     check_db_obj(menu, 'menu')
     await session.delete(menu)
     await session.commit()
-
     await redis_client.delete(str(menu.id))
-    cached_menus = json.loads(str(await redis_client.get('menus')))
-    item = [item for item in cached_menus if item['id'] == str(menu.id)]
-    cached_menus.remove(item[0])
-    await redis_client.set(name='menus', value=json.dumps(cached_menus), ex=300)
+    cached_menus = await redis_client.get('menus')
+    if cached_menus:
+        cached_menus = json.loads(cached_menus)
+        item = [item for item in cached_menus if item['id'] == str(menu.id)]
+        cached_menus.remove(item[0])
+        await redis_client.set(name='menus', value=json.dumps(cached_menus), ex=300)
 
     cached_submenus = await redis_client.get(f'{menu.id} submenus')
     if cached_submenus:
