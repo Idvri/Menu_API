@@ -33,12 +33,10 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def override_get_async_redis_client(
-        host: str = REDIS_HOST_TEST, port: str = REDIS_PORT_TEST
-) -> AsyncGenerator[Redis, None]:
+async def override_get_async_redis_client() -> AsyncGenerator[Redis, None]:
     """Функция получения redis_client'а для работы с кэшом."""
 
-    async with Redis(host=host, port=int(port)) as redis_client:
+    async with Redis(host=REDIS_HOST_TEST, port=int(REDIS_PORT_TEST)) as redis_client:
         yield redis_client
 
 
