@@ -1,16 +1,14 @@
-from .menu import MenuSchema, CreateMenuSchema, MenuSchemaWithCounters
-from .submenu import SubmenuSchema, CreateSubmenuSchema, SubmenuSchemaWithCounter
+from .menu import MenuSchema, CreateMenuSchema
+from .submenu import SubmenuSchema, CreateSubmenuSchema
 from .dish import DishSchema, CreateDishSchema
-from .universal import MessageSchema
+from .universal import DefaultModelSchema, MessageSchema
 
 __all__ = [
     'MenuSchema', 'CreateMenuSchema',
-    'MenuSchemaWithCounters',
 
-    'SubmenuSchema',
-    'CreateSubmenuSchema', 'SubmenuSchemaWithCounter',
+    'SubmenuSchema', 'CreateSubmenuSchema',
 
     'DishSchema', 'CreateDishSchema',
 
-    'MessageSchema',
+    'DefaultModelSchema', 'MessageSchema',
 ]

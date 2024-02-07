@@ -1,27 +1,19 @@
-import json
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from redis.asyncio import Redis
-from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import JSONResponse
 from starlette.status import HTTP_200_OK, HTTP_201_CREATED, HTTP_404_NOT_FOUND
 
 from src import get_async_redis_client, get_async_session
-from src.schemas import (
-    CreateSubmenuSchema,
-    MessageSchema,
-    SubmenuSchema,
-    SubmenuSchemaWithCounter,
+from src.logic import (
+    create_submenu_logic,
+    delete_submenu_logic,
+    get_submenu_logic,
+    get_submenus_logic,
+    update_submenu_logic,
 )
-from src.utils import (
-    check_db_obj,
-    create_db_obj,
-    get_submenu_db,
-    get_submenu_db_with_counters,
-    get_submenus_db,
-)
+from src.schemas import CreateSubmenuSchema, MessageSchema, SubmenuSchema
 
 router = APIRouter(
     prefix='/submenus',
@@ -37,22 +29,14 @@ router = APIRouter(
 
 )
 async def get_submenus(
+        request: Request,
         target_menu_id: UUID,
         session: AsyncSession = Depends(get_async_session),
         redis_client: Redis = Depends(get_async_redis_client),
 ):
     """Эндпойнт для получения подменю определенного меню."""
 
-    cashed_submenus = await redis_client.get(f'{target_menu_id} submenus')
-    if cashed_submenus:
-        return json.loads(cashed_submenus)
-
-    try:
-        submenus = await get_submenus_db(target_menu_id, session)
-    except NoResultFound as exc:
-        exc.args = 'menu'
-        raise exc
-    return submenus
+    return await get_submenus_logic(request, target_menu_id, session, redis_client)
 
 
 @router.post(
@@ -63,6 +47,7 @@ async def get_submenus(
     tags=['Submenu'],
 )
 async def create_submenu(
+        request: Request,
         target_menu_id: UUID,
         data: CreateSubmenuSchema,
         session: AsyncSession = Depends(get_async_session),
@@ -70,61 +55,25 @@ async def create_submenu(
 ):
     """Эндпойнт для создания подменю."""
 
-    try:
-        submenu = await create_db_obj(target_menu_id, data, session)
-    except IntegrityError:
-        return JSONResponse(content={'detail': 'menu not found'}, status_code=HTTP_404_NOT_FOUND)
-
-    cashed_submenus = await redis_client.get(f'{target_menu_id} submenus')
-    if not cashed_submenus:
-        submenus = []
-    else:
-        submenus = json.loads(cashed_submenus)
-    submenu_for_cache = {
-        'id': str(submenu.id),
-        'title': submenu.title,
-        'description': submenu.description,
-    }
-    submenus.append(submenu_for_cache)
-    await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(submenus), ex=300)
-
-    cached_menu = await redis_client.get(str(target_menu_id))
-    if cached_menu:
-        cached_menu = json.loads(cached_menu)
-        cached_menu['submenus_count'] += 1
-        await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
-
-    submenu_for_cache = {
-        'id': str(submenu.id),
-        'title': submenu.title,
-        'description': submenu.description,
-        'dishes_count': 0,
-    }
-    await redis_client.set(name=submenu_for_cache['id'], value=json.dumps(submenu_for_cache), ex=300)
-
-    return submenu
+    return await create_submenu_logic(request, target_menu_id, data, session, redis_client)
 
 
 @router.get(
     '/{target_submenu_id}',
-    response_model=SubmenuSchemaWithCounter,
+    response_model=SubmenuSchema,
     responses={HTTP_404_NOT_FOUND: {'model': MessageSchema}},
     tags=['Submenu'],
 )
 async def get_submenu(
+        request: Request,
+        target_menu_id: UUID,
         target_submenu_id: UUID,
         session: AsyncSession = Depends(get_async_session),
         redis_client: Redis = Depends(get_async_redis_client),
 ):
     """Эндпойнт для получения подменю."""
 
-    cache_value = await redis_client.get(str(target_submenu_id))
-    if cache_value:
-        return json.loads(cache_value)
-
-    submenu = await get_submenu_db_with_counters(target_submenu_id, session)
-    check_db_obj(submenu, 'submenu')
-    return submenu
+    return await get_submenu_logic(request, target_menu_id, target_submenu_id, session, redis_client)
 
 
 @router.patch(
@@ -134,6 +83,7 @@ async def get_submenu(
     tags=['Submenu'],
 )
 async def update_submenu(
+        request: Request,
         target_menu_id: UUID,
         target_submenu_id: UUID,
         data: CreateSubmenuSchema,
@@ -142,31 +92,7 @@ async def update_submenu(
 ):
     """Эндпойнт для изменения подменю."""
 
-    submenu = await get_submenu_db(target_submenu_id, session)
-    check_db_obj(submenu, 'submenu')
-    submenu.title = data.title
-    submenu.description = data.description
-    await session.commit()
-
-    cache_value = await redis_client.get(str(target_submenu_id))
-    if cache_value:
-        cache_to_change = json.loads(cache_value)
-        cache_to_change['title'] = submenu.title
-        cache_to_change['description'] = submenu.description
-        await redis_client.set(name=cache_to_change['id'], value=json.dumps(cache_to_change), ex=300)
-
-    cached_submenus = await redis_client.get(f'{target_menu_id} submenus')
-    if cached_submenus:
-        cached_submenus = json.loads(cached_submenus)
-        for cache_submenu in cached_submenus:
-            if cache_submenu['id'] == str(target_submenu_id):
-                cached_submenus.remove(cache_submenu)
-                cache_submenu['title'] = submenu.title
-                cache_submenu['description'] = submenu.description
-                cached_submenus.append(cache_submenu)
-                await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(cached_submenus), ex=300)
-
-    return submenu
+    return await update_submenu_logic(request, target_menu_id, target_submenu_id, data, session, redis_client)
 
 
 @router.delete(
@@ -178,6 +104,7 @@ async def update_submenu(
     tags=['Submenu'],
 )
 async def delete_submenu(
+        request: Request,
         target_menu_id: UUID,
         target_submenu_id: UUID,
         session: AsyncSession = Depends(get_async_session),
@@ -185,39 +112,4 @@ async def delete_submenu(
 ):
     """Эндпойнт для удаления подменю."""
 
-    submenu = await get_submenu_db(target_submenu_id, session)
-    check_db_obj(submenu, 'submenu')
-    for dish in submenu.dishes:
-        await session.delete(dish)
-    await session.delete(submenu)
-    await session.commit()
-
-    cached_submenu_with_dishes_count = await redis_client.get(str(submenu.id))
-
-    await redis_client.delete(str(submenu.id))
-    cashed_submenus = await redis_client.get(f'{target_menu_id} submenus')
-    if cashed_submenus:
-        cashed_submenus = json.loads(cashed_submenus)
-        item = [item for item in cashed_submenus if item['id'] == str(submenu.id)]
-        cashed_submenus.remove(item[0])
-        await redis_client.set(name=f'{target_menu_id} submenus', value=json.dumps(cashed_submenus), ex=300)
-
-    cached_menu = await redis_client.get(str(target_menu_id))
-    if cached_menu:
-        cached_menu = json.loads(cached_menu)
-        if cached_submenu_with_dishes_count:
-            cached_dishes_count = json.loads(cached_submenu_with_dishes_count)['dishes_count']
-            if cached_dishes_count > 0:
-                cached_menu['dishes_count'] -= cached_dishes_count
-        cached_menu['submenus_count'] -= 1
-        await redis_client.set(name=cached_menu['id'], value=json.dumps(cached_menu), ex=300)
-
-    cached_dishes = await redis_client.get(f'{target_submenu_id} dishes')
-    if cached_dishes:
-        cached_dishes = json.loads(cached_dishes)
-        for cached_dish in cached_dishes:
-            await redis_client.delete(cached_dish['id'])
-        await redis_client.delete(f'{target_submenu_id} dishes')
-    await redis_client.delete(f'{submenu.id} dishes')
-
-    return JSONResponse(content={'message': 'Success.'}, status_code=HTTP_200_OK)
+    return await delete_submenu_logic(request, target_menu_id, target_submenu_id, session, redis_client)

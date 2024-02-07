@@ -52,7 +52,7 @@ async def prepare_database():
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine_test.begin() as conn:
-        gen = get_async_redis_client(REDIS_HOST_TEST, REDIS_PORT_TEST)
+        gen = override_get_async_redis_client()
         awaitable = anext(gen)
         redis_client = await awaitable
         await redis_client.flushdb()

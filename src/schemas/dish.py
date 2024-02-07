@@ -1,7 +1,8 @@
-from .menu import CreateMenuSchema, MenuSchema
+from .menu import CreateMenuSchema
+from .universal import DefaultModelSchema
 
 
-class DishSchema(MenuSchema):
+class DishSchema(DefaultModelSchema):
     """Pydantic схема для отображения блюда."""
 
     price: str
