@@ -22,8 +22,8 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_async_redis_client(host: str = REDIS_HOST, port: str = REDIS_PORT) -> AsyncGenerator[Redis, None]:
+async def get_async_redis_client() -> AsyncGenerator[Redis, None]:
     """Функция получения redis_client'а для работы с кэшом."""
 
-    async with Redis(host=host, port=int(port)) as redis_client:
+    async with Redis(host=REDIS_HOST, port=int(REDIS_PORT)) as redis_client:
         yield redis_client
